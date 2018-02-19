@@ -67,10 +67,10 @@ def main():
     
         # make semi-transparent bounding box
         cv2.addWeighted(overlay, alpha, output, 1 - alpha, 0, output)
-    
-        # show the frame
-        cv2.imshow(filename, output)
 
+    # show the frame
+    cv2.imshow(filename, output)
+    
     key = cv2.waitKey(0)
     
     # cleanup
