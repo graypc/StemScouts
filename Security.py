@@ -5,17 +5,46 @@ import sys
 import RPi.GPIO as GPIO
 import time
 import socket
+import urllib
+import Emailer
 
 STATE_OPEN = True
 STATE_CLOSED = not STATE_OPEN
 
 cameraIP = ""
+email = ""
+
+def getFileName(path):
+    # Path is "/images/DateTime.png"
+    return path.split("/")[2]
 
 def handleOpening(pinNumber) :
     print "OPEN " + str(pinNumber)
+
+    # Request the camera server to take a picture
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    print "IP " + cameraIP
     sock.sendto("Take picture", (cameraIP, 5055))
+
+    # Wait for the camera server to reply
+    reply, addr = sock.recvfrom(1024);
+    print reply
+
+    if reply == "False alarm":
+        return
+
+    # Reply from camera is the name of a file.  Use urllib to fetch it.
+    # Get image and save locally
+    url = "http://" + cameraIP + reply
+    fileName = getFileName(reply)
+    f = open(fileName, "wb")
+    f.write(urllib.urlopen(url).read())
+    f.close()
+
+    # Email the image
+    print Emailer.sendMail(
+            "Intruder alert at " + str(pinNumber),
+            email,
+            fileName)
 
 def handleClosing(pinNumber) :
     print "CLOSE " + str(pinNumber)
@@ -45,12 +74,14 @@ def main(argv):
     parser = argparse.ArgumentParser(description =
             "Security system")
     parser.add_argument("--cameraIP", required=True, help="IP of camera server.")
+    parser.add_argument("--email", required=True, help="Email for notifications.")
     args = parser.parse_args()
     global cameraIP
+    global email 
     cameraIP = args.cameraIP
+    email = args.email
 
     print "Connecting to camera server " + cameraIP
-
 
     pinA = 5
     pinB = 6
