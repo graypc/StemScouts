@@ -8,7 +8,7 @@ import cv2      # opencv
 import imutils  # helper functions from pyimagesearch.com
 import argparse
 
-NUM_WARM_UP_FRAMES = 2
+NUM_WARM_UP_FRAMES = 4
 IMAGE_DIR = "/var/www/html/images/"
 PORT = 5055
 CAMERA_PORT = 0
@@ -89,12 +89,12 @@ def main(argv):
             # make semi-transparent bounding box
             cv2.addWeighted(overlay, alpha, output, 1 - alpha, 0, output)
 
-        fileName = IMAGE_DIR + timestamp + ".png"
+        fileName = IMAGE_DIR + addr[0] + "." + timestamp + ".png"
         print "Saving image.  " + fileName
         cv2.imwrite(fileName, output)
 
         if faceDetected:
-            sock.sendto("/images/" + timestamp + ".png", addr)
+            sock.sendto("/images/" + addr[0] + "." + timestamp + ".png", addr)
         else:
             sock.sendto("False alarm", addr)
 
